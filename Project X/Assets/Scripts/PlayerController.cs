@@ -5,69 +5,86 @@ using UnityEngine;
 [RequireComponent(typeof(CharacterController))]
 public class PlayerController : MonoBehaviour
 {
-    public Camera playerCamera;
-    public float walkSpeed = 6f;
-    public float runSpeed = 12f;
-    public float jumpPower = 7f;
-    public float gravity = 10f;
-
-
-    public float lookSpeed = 2f;
-    public float lookXLimit = 45f;
-
-
+    private float horizontal;
+    private float vertical;
+    
     Vector3 moveDirection = Vector3.zero;
     float rotationX = 0;
 
     public bool canMove = true;
 
-    
+    private bool isWallSliding;
+    private bool isWallJumping;
+    private Vector3 wallJumpingDirection;
+    private Vector3 wallNormalSum;
+    private float wallJumpingTime = 0.2f;
+    private float wallJumpingCounter;
+    private float wallJumpingDuration = 0.6f;
+
+
+    [Header("General Movement")]
+    [SerializeField] Camera playerCamera;
+    [SerializeField] float walkSpeed = 6f;
+    [SerializeField] float runSpeed = 12f;
+    [SerializeField] float jumpPower = 7f;
+    [SerializeField] float gravity = 10f;
+
+    [Header("Camera Movement")]
+    [SerializeField] float lookSpeed = 2f;
+    [SerializeField] float lookXLimit = 45f;
+
+    [Header("Wall Jumping")]
+    [SerializeField] float wallSlidingSpeed = 0.5f;
+    [SerializeField] Vector3 wallJumpingPower = new Vector3(8f, 8f, 8f);
+    [SerializeField] LayerMask wallLayer;
+    [SerializeField] Transform wallCheck;
+
     CharacterController characterController;
-    void Start()
-    {
+    void Start() {
         characterController = GetComponent<CharacterController>();
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
     }
 
-    void Update()
-    {
-
-        #region Handles Movment
-        Vector3 forward = transform.TransformDirection(Vector3.forward);
-        Vector3 right = transform.TransformDirection(Vector3.right);
+    void Update() {
+        horizontal = Input.GetAxis("Horizontal");
+        vertical = Input.GetAxis("Vertical");
 
         // Press Left Shift to run
-        bool isRunning = Input.GetKey(KeyCode.LeftShift);
-        float curSpeedX = canMove ? (isRunning ? runSpeed : walkSpeed) * Input.GetAxis("Vertical") : 0;
-        float curSpeedY = canMove ? (isRunning ? runSpeed : walkSpeed) * Input.GetAxis("Horizontal") : 0;
-        float movementDirectionY = moveDirection.y;
-        moveDirection = (forward * curSpeedX) + (right * curSpeedY);
+        if (!isWallJumping) {
+            #region Handles Movement
 
-        #endregion
+            Vector3 forward = transform.TransformDirection(Vector3.forward);
+            Vector3 right = transform.TransformDirection(Vector3.right);
 
-        #region Handles Jumping
-        if (Input.GetButton("Jump") && canMove && characterController.isGrounded)
-        {
-            moveDirection.y = jumpPower;
+            bool isRunning = Input.GetKey(KeyCode.LeftShift);
+            float curSpeedX = canMove ? (isRunning ? runSpeed : walkSpeed) * vertical : 0;
+            float curSpeedY = canMove ? (isRunning ? runSpeed : walkSpeed) * horizontal : 0;
+            float movementDirectionY = moveDirection.y;
+            moveDirection = (forward * curSpeedX) + (right * curSpeedY);
+
+            #endregion
+
+            #region Handles Jumping
+            if (!isWallJumping) {
+                if (Input.GetButton("Jump") && canMove && characterController.isGrounded) {
+                    moveDirection.y = jumpPower;
+                }
+                else {
+                    moveDirection.y = movementDirectionY;
+                }
+            }
         }
-        else
-        {
-            moveDirection.y = movementDirectionY;
-        }
 
-        if (!characterController.isGrounded)
-        {
+        if (!characterController.isGrounded) {
             moveDirection.y -= gravity * Time.deltaTime;
         }
 
         #endregion
 
         #region Handles Rotation
-        characterController.Move(moveDirection * Time.deltaTime);
 
-        if (canMove)
-        {
+        if (canMove) {
             rotationX += -Input.GetAxis("Mouse Y") * lookSpeed;
             rotationX = Mathf.Clamp(rotationX, -lookXLimit, lookXLimit);
             playerCamera.transform.localRotation = Quaternion.Euler(rotationX, 0, 0);
@@ -75,5 +92,63 @@ public class PlayerController : MonoBehaviour
         }
 
         #endregion
+
+        WallSlide();
+        WallJump();
+
+        characterController.Move(moveDirection * Time.deltaTime);
+    }
+
+    private bool IsWalled() {
+        Collider[] colliders = Physics.OverlapSphere(wallCheck.position, characterController.radius + characterController.skinWidth, wallLayer);
+        int wallCnt = 0;
+        wallNormalSum = Vector3.zero;
+
+        foreach (Collider collider in colliders) {
+            if(collider.gameObject.tag == "Wall") {
+                wallCnt++;
+                Vector3 closestPoint = Physics.ClosestPoint(wallCheck.position, collider, collider.transform.position, collider.transform.rotation);
+                Vector3 wallNormal = (wallCheck.position - closestPoint).normalized;
+                wallNormalSum += wallNormal;
+            }
+        }
+        wallNormalSum.Normalize();
+        return wallCnt > 0;
+    }
+
+    private void WallSlide() {
+        if (IsWalled() && !characterController.isGrounded && (horizontal != 0f || vertical != 0f)) {
+            isWallSliding = true;
+            moveDirection = new Vector3(moveDirection.x, Mathf.Clamp(moveDirection.y, -wallSlidingSpeed, float.MaxValue), moveDirection.z);
+        }
+        else {
+            isWallSliding = false;
+        }
+    }
+
+    private void WallJump() {
+        if(isWallSliding) {
+            isWallJumping = false;
+            wallJumpingCounter = wallJumpingTime;
+
+            wallJumpingDirection = (transform.TransformDirection(Vector3.forward).normalized + wallNormalSum).normalized;
+
+            CancelInvoke(nameof(StopWallJumping));
+        }
+        else {
+            wallJumpingCounter -= Time.deltaTime;
+        }
+
+        if(Input.GetButton("Jump") && wallJumpingCounter > 0f) {
+            isWallJumping = true;
+            moveDirection = new Vector3(wallJumpingDirection.x * wallJumpingPower.x, wallJumpingPower.y, wallJumpingDirection.z * wallJumpingPower.z);
+            wallJumpingCounter = 0f;
+
+            Invoke(nameof(StopWallJumping), wallJumpingDuration);
+        }
+    }
+
+    private void StopWallJumping() {
+        isWallJumping = false;
     }
 }
