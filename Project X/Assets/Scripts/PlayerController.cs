@@ -19,7 +19,7 @@ public class PlayerController : MonoBehaviour
     private Vector3 wallNormalSum;
     private float wallJumpingTime = 0.2f;
     private float wallJumpingCounter;
-    private float wallJumpingDuration = 0.6f;
+    private float wallJumpingDuration = 0.4f;
 
 
     [Header("General Movement")]
@@ -40,13 +40,18 @@ public class PlayerController : MonoBehaviour
     [SerializeField] Transform wallCheck;
 
     CharacterController characterController;
+    GameManager gameManager;
+    ControlsSerializable controls;
     void Start() {
         characterController = GetComponent<CharacterController>();
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
+        controls = gameManager.controls;
     }
 
     void Update() {
+        if (gameManager.gameOver)
+            return;
+   
         horizontal = Input.GetAxis("Horizontal");
         vertical = Input.GetAxis("Vertical");
 
@@ -57,7 +62,7 @@ public class PlayerController : MonoBehaviour
             Vector3 forward = transform.TransformDirection(Vector3.forward);
             Vector3 right = transform.TransformDirection(Vector3.right);
 
-            bool isRunning = Input.GetKey(KeyCode.LeftShift);
+            bool isRunning = Input.GetKey(controls.sprint);
             float curSpeedX = canMove ? (isRunning ? runSpeed : walkSpeed) * vertical : 0;
             float curSpeedY = canMove ? (isRunning ? runSpeed : walkSpeed) * horizontal : 0;
             float movementDirectionY = moveDirection.y;
@@ -67,7 +72,7 @@ public class PlayerController : MonoBehaviour
 
             #region Handles Jumping
             if (!isWallJumping) {
-                if (Input.GetButton("Jump") && canMove && characterController.isGrounded) {
+                if (Input.GetKey(controls.jump) && canMove && characterController.isGrounded) {
                     moveDirection.y = jumpPower;
                 }
                 else {
