@@ -20,6 +20,7 @@ public class GameManager : MonoBehaviour
     [HideInInspector] public bool gameOver = true;
     public float timer = 0f;
     int enemiesLeft;
+    int playerHp = 100;
 
     [Header("UI")]
     [SerializeField] Button startButton;
@@ -27,6 +28,8 @@ public class GameManager : MonoBehaviour
     [SerializeField] TextMeshProUGUI timerText;
     [SerializeField] TextMeshProUGUI bestTimeText;
     [SerializeField] TextMeshProUGUI enemiesLeftText;
+    [SerializeField] TextMeshProUGUI hpText;
+    [SerializeField] Image crosshair;
     //[SerializeField] TextMeshProUGUI controlGuideText;
 
     [Space(20)]
@@ -48,6 +51,7 @@ public class GameManager : MonoBehaviour
             timer += Time.deltaTime;
         timerText.text = "Time: " + timer.ToString("0.00");
         enemiesLeftText.text = "Enemies: " + enemiesLeft;
+        hpText.text = "HP: " + playerHp;
     }
 
     public void StartGame() {
@@ -63,6 +67,11 @@ public class GameManager : MonoBehaviour
         Cursor.visible = false;
     }
 
+    public void RestartGame() {
+        gameOver = true;
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
     public void GameOver() {
         if(timer < levelSpecs.bestTime && enemiesLeft == 0)
             PlayerPrefs.SetFloat("Best", timer);
@@ -72,17 +81,19 @@ public class GameManager : MonoBehaviour
 
     void ToggleMenuState(bool mode) {
         startButton.gameObject.SetActive(mode);
+        crosshair.gameObject.SetActive(!mode);
         //controlGuideText.gameObject.SetActive(mode);
-    }
-
-    public void RestartGame() {
-        gameOver = true;
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
     public void EnemyKilled() {
         enemiesLeft--;
         if (enemiesLeft == 0)
+            GameOver();
+    }
+
+    public void DamagePlayer(int amount) {
+        playerHp -= amount;
+        if (playerHp <= 0)
             GameOver();
     }
 }
