@@ -19,7 +19,7 @@ public class PlayerController : MonoBehaviour
     private Vector3 wallNormalSum;
     private float wallJumpingTime = 0.2f;
     private float wallJumpingCounter;
-    private float wallJumpingDuration = 0.4f;
+    private float wallJumpingDuration = 0.2f;
 
 
     [Header("General Movement")]

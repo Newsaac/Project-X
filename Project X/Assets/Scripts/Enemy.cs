@@ -4,7 +4,7 @@ using UnityEngine;
 
 public abstract class Enemy : MonoBehaviour
 {
-    [SerializeField] EnemyStats stats;
+    [SerializeField] protected EnemyStats stats;
 
     protected int hp;
     protected FloatingStatusBar healthBar;
@@ -31,10 +31,5 @@ public abstract class Enemy : MonoBehaviour
             gameManager.EnemyKilled();
             Destroy(this.gameObject);
         }
-    }
-
-    protected void OnCollisionEnter(Collision collision) {
-        if (collision.gameObject.CompareTag("Player"))
-            gameManager.DamagePlayer(stats.collideDamage);
     }
 }
