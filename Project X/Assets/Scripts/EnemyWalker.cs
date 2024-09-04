@@ -4,8 +4,9 @@ using UnityEngine;
 
 public class EnemyWalker : Enemy
 {
-    void Start() {
-        
+
+    private new void Start() {
+        base.Start();
     }
 
     void Update() {

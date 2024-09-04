@@ -18,9 +18,12 @@ public class GameManager : MonoBehaviour
     }
 
     [HideInInspector] public bool gameOver = true;
-    public float timer = 0f;
+    float timer = 0f;
     int enemiesLeft;
-    int playerHp = 100;
+
+    [Header("Game Vars")]
+    [SerializeField] int maxPlayerHp;
+    [SerializeField] int playerHp;
 
     [Header("UI")]
     [SerializeField] Button startButton;
@@ -28,7 +31,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] TextMeshProUGUI timerText;
     [SerializeField] TextMeshProUGUI bestTimeText;
     [SerializeField] TextMeshProUGUI enemiesLeftText;
-    [SerializeField] TextMeshProUGUI hpText;
+    [SerializeField] Slider hpSlider;
     [SerializeField] Image crosshair;
     //[SerializeField] TextMeshProUGUI controlGuideText;
 
@@ -38,6 +41,10 @@ public class GameManager : MonoBehaviour
     private LevelSpecs levelSpecs;
 
     void Start() {
+        playerHp = maxPlayerHp;
+        hpSlider.value = ((float)playerHp) / maxPlayerHp;
+        enemiesLeftText.text = "Enemies: " + enemiesLeft;
+
         levelSpecs = new LevelSpecs(
             PlayerPrefs.HasKey("Best") ? PlayerPrefs.GetFloat("Best") : 0, 
             10
@@ -50,8 +57,6 @@ public class GameManager : MonoBehaviour
         if(!gameOver)
             timer += Time.deltaTime;
         timerText.text = "Time: " + timer.ToString("0.00");
-        enemiesLeftText.text = "Enemies: " + enemiesLeft;
-        hpText.text = "HP: " + playerHp;
     }
 
     public void StartGame() {
@@ -87,12 +92,14 @@ public class GameManager : MonoBehaviour
 
     public void EnemyKilled() {
         enemiesLeft--;
+        enemiesLeftText.text = "Enemies: " + enemiesLeft;
         if (enemiesLeft == 0)
             GameOver();
     }
 
     public void DamagePlayer(int amount) {
         playerHp -= amount;
+        hpSlider.value = ((float)playerHp) / maxPlayerHp;
         if (playerHp <= 0)
             GameOver();
     }

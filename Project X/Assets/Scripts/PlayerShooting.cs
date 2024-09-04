@@ -35,7 +35,14 @@ public class PlayerShooting : MonoBehaviour
 
             if (Physics.Raycast(rayOrigin, playerCamera.transform.forward, out hit, weaponSpecs.weaponRange)) {
                 laserLine.SetPosition(1, hit.point);
-                
+
+                Enemy enemy = hit.collider.GetComponent<Enemy>();
+                if (enemy != null) {
+                    enemy.TakeDamage(weaponSpecs.gunDamage);
+                }
+
+                // Check if the object we hit has a rigidb
+
                 if (hit.rigidbody != null) {
                     hit.rigidbody.AddForce(-hit.normal * weaponSpecs.hitForce);
                 }

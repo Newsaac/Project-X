@@ -5,7 +5,19 @@ using UnityEngine;
 public abstract class Enemy : MonoBehaviour
 {
     [SerializeField] GameManager gameManager;
-    [SerializeField] int hp = 10;
+    [SerializeField] EnemyStats stats;
+
+    protected int hp;
+    protected FloatingStatusBar healthBar;
+
+    protected void Awake() {
+        healthBar = GetComponentInChildren<FloatingStatusBar>();
+    }
+
+    protected void Start() {
+        hp = stats.maxHp;
+        healthBar.UpdateValue(hp, stats.maxHp);
+    }
 
     protected abstract void Attack();
     protected abstract void Idle();
@@ -13,7 +25,8 @@ public abstract class Enemy : MonoBehaviour
 
     public virtual void TakeDamage(int value) {
         hp -= value;
-        if (hp < 0) {
+        healthBar.UpdateValue(hp, stats.maxHp);
+        if (hp <= 0) {
             gameManager.EnemyKilled();
             Destroy(this.gameObject);
         }
