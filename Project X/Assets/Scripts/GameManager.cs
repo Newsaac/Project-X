@@ -18,6 +18,7 @@ public class GameManager : MonoBehaviour
     }
 
     [HideInInspector] public bool gameOver = true;
+    [HideInInspector] public int ammoCnt = 0;
     float timer = 0f;
     int enemiesLeft;
 
@@ -31,6 +32,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] TextMeshProUGUI timerText;
     [SerializeField] TextMeshProUGUI bestTimeText;
     [SerializeField] TextMeshProUGUI enemiesLeftText;
+    [SerializeField] TextMeshProUGUI ammoText;
     [SerializeField] Slider hpSlider;
     [SerializeField] Image crosshair;
     //[SerializeField] TextMeshProUGUI controlGuideText;
@@ -56,6 +58,7 @@ public class GameManager : MonoBehaviour
     void Update() {
         if(!gameOver)
             timer += Time.deltaTime;
+        ammoText.text = "Ammo: " + ammoCnt;
         timerText.text = "Time: " + timer.ToString("0.00");
     }
 
@@ -81,6 +84,9 @@ public class GameManager : MonoBehaviour
         if(timer < levelSpecs.bestTime && enemiesLeft == 0)
             PlayerPrefs.SetFloat("Best", timer);
         gameOver = true;
+        crosshair.gameObject.SetActive(false);
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
         restartButton.gameObject.SetActive(true);
     }
 

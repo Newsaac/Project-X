@@ -6,9 +6,16 @@ using UnityEngine.UI;
 public class FloatingStatusBar : MonoBehaviour
 {
     [SerializeField] Slider slider;
-    [SerializeField] Camera playerCam;
-    [SerializeField] Transform parentTf;
     [SerializeField] Vector3 offset;
+
+    Camera playerCam;
+    Transform parentTf;
+    
+    private void Awake() {
+        playerCam = GameObject.FindWithTag("MainCamera").GetComponent<Camera>();
+
+        parentTf = transform.parent.parent.transform;
+    }
 
     private void Update() {
         transform.parent.rotation = playerCam.transform.rotation;

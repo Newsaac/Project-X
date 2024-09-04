@@ -4,13 +4,14 @@ using UnityEngine;
 
 public abstract class Enemy : MonoBehaviour
 {
-    [SerializeField] GameManager gameManager;
     [SerializeField] EnemyStats stats;
 
     protected int hp;
     protected FloatingStatusBar healthBar;
+    protected GameManager gameManager;
 
     protected void Awake() {
+        gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
         healthBar = GetComponentInChildren<FloatingStatusBar>();
     }
 
@@ -30,5 +31,10 @@ public abstract class Enemy : MonoBehaviour
             gameManager.EnemyKilled();
             Destroy(this.gameObject);
         }
+    }
+
+    protected void OnCollisionEnter(Collision collision) {
+        if (collision.gameObject.CompareTag("Player"))
+            gameManager.DamagePlayer(stats.collideDamage);
     }
 }

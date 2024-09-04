@@ -7,4 +7,5 @@ using UnityEngine;
 public class EnemyStats
 {
     public int maxHp = 10;
+    public int collideDamage = 10;
 }

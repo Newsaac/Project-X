@@ -7,4 +7,5 @@ public class ControlsSerializable
     public KeyCode jump = KeyCode.Space;
     public KeyCode sprint = KeyCode.LeftShift;
     public KeyCode shoot = KeyCode.Mouse0;
+    public KeyCode reload = KeyCode.R;
 }
