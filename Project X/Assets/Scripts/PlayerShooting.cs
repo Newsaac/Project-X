@@ -35,7 +35,7 @@ public class PlayerShooting : MonoBehaviour
 
             if (Physics.Raycast(rayOrigin, playerCamera.transform.forward, out hit, weaponSpecs.weaponRange)) {
                 laserLine.SetPosition(1, hit.point);
-
+                
                 if (hit.rigidbody != null) {
                     hit.rigidbody.AddForce(-hit.normal * weaponSpecs.hitForce);
                 }
