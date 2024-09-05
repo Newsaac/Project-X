@@ -42,15 +42,19 @@ public class GameManager : MonoBehaviour
 
     private LevelSpecs levelSpecs;
 
+    private void LoadLevelSpecs() {
+        levelSpecs = new LevelSpecs(
+            PlayerPrefs.HasKey("Best") ? PlayerPrefs.GetFloat("Best") : 0,
+            10
+        );
+    }
+
     void Start() {
         playerHp = maxPlayerHp;
         hpSlider.value = ((float)playerHp) / maxPlayerHp;
-        enemiesLeftText.text = "Enemies: " + enemiesLeft;
 
-        levelSpecs = new LevelSpecs(
-            PlayerPrefs.HasKey("Best") ? PlayerPrefs.GetFloat("Best") : 0, 
-            10
-        );
+        LoadLevelSpecs();
+
         gameOver = true;
         Time.timeScale = 0;
     }
@@ -68,6 +72,8 @@ public class GameManager : MonoBehaviour
         timer = 0f;
         enemiesLeft = levelSpecs.enemyCnt;
         bestTimeText.text = "Best: " + (levelSpecs.bestTime == 0f ? "-" : levelSpecs.bestTime.ToString("0.00"));
+
+        enemiesLeftText.text = "Enemies: " + enemiesLeft;
 
         gameOver = false;
         ToggleMenuState(false);

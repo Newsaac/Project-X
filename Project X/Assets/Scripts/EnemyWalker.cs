@@ -86,7 +86,7 @@ public class EnemyWalker : Enemy
 
     private void OnCollisionEnter(Collision collision) {
         if (collision.gameObject.CompareTag("Player")) {
-            InvokeRepeating(nameof(PerformAttack), 0, stats.attackCooldown);
+            InvokeRepeating(nameof(PerformAttack), 0, stats.collideDmgCooldown);
         }
     }
 
