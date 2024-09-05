@@ -10,17 +10,15 @@ public class GameManager : MonoBehaviour
 {
     private struct LevelSpecs {
         public readonly float bestTime;
-        public readonly int enemyCnt;
-        public LevelSpecs(float bestTime, int enemyCnt) : this() {
+        public LevelSpecs(float bestTime) : this() {
             this.bestTime = bestTime;
-            this.enemyCnt = enemyCnt;
         }
     }
 
     [HideInInspector] public bool gameOver = true;
     [HideInInspector] public int ammoCnt = 0;
+    [HideInInspector] public int enemiesLeft;
     float timer = 0f;
-    int enemiesLeft;
 
     [Header("Game Vars")]
     [SerializeField] int maxPlayerHp;
@@ -35,6 +33,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] TextMeshProUGUI ammoText;
     [SerializeField] Slider hpSlider;
     [SerializeField] Image crosshair;
+    [SerializeField] GameObject menuPanel;
     //[SerializeField] TextMeshProUGUI controlGuideText;
 
     [Space(20)]
@@ -44,8 +43,7 @@ public class GameManager : MonoBehaviour
 
     private void LoadLevelSpecs() {
         levelSpecs = new LevelSpecs(
-            PlayerPrefs.HasKey("Best") ? PlayerPrefs.GetFloat("Best") : 0,
-            10
+            PlayerPrefs.HasKey("Best") ? PlayerPrefs.GetFloat("Best") : 0
         );
     }
 
@@ -70,7 +68,6 @@ public class GameManager : MonoBehaviour
         Time.timeScale = 1;
         
         timer = 0f;
-        enemiesLeft = levelSpecs.enemyCnt;
         bestTimeText.text = "Best: " + (levelSpecs.bestTime == 0f ? "-" : levelSpecs.bestTime.ToString("0.00"));
 
         enemiesLeftText.text = "Enemies: " + enemiesLeft;
@@ -87,17 +84,19 @@ public class GameManager : MonoBehaviour
     }
 
     public void GameOver() {
-        if(timer < levelSpecs.bestTime && enemiesLeft == 0)
+        if((timer < levelSpecs.bestTime || levelSpecs.bestTime == 0) && enemiesLeft == 0)
             PlayerPrefs.SetFloat("Best", timer);
         gameOver = true;
         crosshair.gameObject.SetActive(false);
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
+        menuPanel.gameObject.SetActive(true);
         restartButton.gameObject.SetActive(true);
     }
 
     void ToggleMenuState(bool mode) {
         startButton.gameObject.SetActive(mode);
+        menuPanel.gameObject.SetActive(mode);
         crosshair.gameObject.SetActive(!mode);
         //controlGuideText.gameObject.SetActive(mode);
     }

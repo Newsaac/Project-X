@@ -16,6 +16,7 @@ public abstract class Enemy : MonoBehaviour
     }
 
     protected void Start() {
+        gameManager.enemiesLeft++;
         hp = stats.maxHp;
         healthBar.UpdateValue(hp, stats.maxHp);
     }
