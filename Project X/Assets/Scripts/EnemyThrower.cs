@@ -141,6 +141,8 @@ public class EnemyThrower : Enemy
         //uncomment to disable vertical player tracking
         lookDirection = new Vector3(lookDirection.x, transform.position.y, lookDirection.z);
 
+        Debug.Log(moveDirection);
+
         rb.AddForce(moveDirection.normalized * stats.speed);
         transform.LookAt(lookDirection);
     }

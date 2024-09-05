@@ -21,6 +21,14 @@ public class PlayerController : MonoBehaviour
     private float wallJumpingCounter;
     private float wallJumpingDuration = 0.2f;
 
+    
+
+    private Vector3 jointOriginalPos;
+    private float timer = 0;
+    private bool isWalking = false;
+    private bool isSprinting = false;
+    
+    public Transform joint;
 
     [Header("General Movement")]
     [SerializeField] Camera playerCamera;
@@ -32,6 +40,10 @@ public class PlayerController : MonoBehaviour
     [Header("Camera Movement")]
     [SerializeField] float lookSpeed = 2f;
     [SerializeField] float lookXLimit = 45f;
+    [Space(10)]
+    [SerializeField] float bobSpeed = 10f;
+    [SerializeField] float sprintBobIncrease = 3f;
+    [SerializeField] Vector3 bobAmount = new Vector3(.15f, .05f, 0f);
 
     [Header("Wall Jumping")]
     [SerializeField] float wallSlidingSpeed = 0.5f;
@@ -42,18 +54,28 @@ public class PlayerController : MonoBehaviour
     CharacterController characterController;
     GameManager gameManager;
     GameSettings settings;
-    void Start() {
+
+    private void Awake() {
         characterController = GetComponent<CharacterController>();
         gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
+        jointOriginalPos = joint.localPosition;
+    }
+
+    void Start() {
         settings = gameManager.settings;
     }
 
     void Update() {
         if (gameManager.gameOver)
             return;
-   
+
+
+
         horizontal = Input.GetAxis("Horizontal");
         vertical = Input.GetAxis("Vertical");
+
+        isSprinting = Input.GetKey(settings.sprint) && characterController.isGrounded;
+        isWalking = (horizontal != 0 || vertical != 0) && characterController.isGrounded;
 
         // Press Left Shift to run
         if (!isWallJumping) {
@@ -100,8 +122,29 @@ public class PlayerController : MonoBehaviour
 
         WallSlide();
         WallJump();
+        HeadBob();
 
         characterController.Move(moveDirection * Time.deltaTime);
+    }
+
+    private void HeadBob() {
+        if (isWalking) {
+            // Calculates HeadBob speed during sprint
+            if (isSprinting) {
+                timer += Time.deltaTime * (bobSpeed + sprintBobIncrease);
+            }
+            // Calculates HeadBob speed during walking
+            else {
+                timer += Time.deltaTime * bobSpeed;
+            }
+            // Applies HeadBob movement
+            joint.localPosition = new Vector3(jointOriginalPos.x + Mathf.Sin(timer) * bobAmount.x, jointOriginalPos.y + Mathf.Sin(timer) * bobAmount.y, jointOriginalPos.z + Mathf.Sin(timer) * bobAmount.z);
+        }
+        else {
+            // Resets when play stops moving
+            timer = 0;
+            joint.localPosition = new Vector3(Mathf.Lerp(joint.localPosition.x, jointOriginalPos.x, Time.deltaTime * bobSpeed), Mathf.Lerp(joint.localPosition.y, jointOriginalPos.y, Time.deltaTime * bobSpeed), Mathf.Lerp(joint.localPosition.z, jointOriginalPos.z, Time.deltaTime * bobSpeed));
+        }
     }
 
     private bool IsWalled() {

@@ -4315,6 +4315,10 @@ PrefabInstance:
       propertyPath: m_AnchorMax.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4692424157708057301, guid: 6d3714c9096a76147a2cfbe7c360f3f1, type: 3}
+      propertyPath: stats.speed
+      value: 10
+      objectReference: {fileID: 0}
     - target: {fileID: 7095351309073035641, guid: 6d3714c9096a76147a2cfbe7c360f3f1, type: 3}
       propertyPath: m_Name
       value: Thrower
