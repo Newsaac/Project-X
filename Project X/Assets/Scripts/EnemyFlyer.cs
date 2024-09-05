@@ -60,6 +60,7 @@ public class EnemyFlyer : Enemy
     }
 
     private void CreateExplosion() {
+        audioSource.volume = gameManager.settings.effectsVolume;
         audioSource.Play();
         explosion = Instantiate(explosionPrefab, transform);
         Invoke(nameof(EndExplosion), explosionDuration);

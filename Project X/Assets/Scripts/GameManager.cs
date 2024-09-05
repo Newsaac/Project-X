@@ -37,7 +37,7 @@ public class GameManager : MonoBehaviour
     //[SerializeField] TextMeshProUGUI controlGuideText;
 
     [Space(20)]
-    public ControlsSerializable controls;
+    public GameSettings settings;
 
     private LevelSpecs levelSpecs;
 

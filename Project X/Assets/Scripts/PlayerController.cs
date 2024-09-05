@@ -35,17 +35,17 @@ public class PlayerController : MonoBehaviour
 
     [Header("Wall Jumping")]
     [SerializeField] float wallSlidingSpeed = 0.5f;
-    [SerializeField] Vector3 wallJumpingPower = new Vector3(8f, 8f, 8f);
+    [SerializeField] Vector3 wallJumpingPower = new(8f, 8f, 8f);
     [SerializeField] LayerMask wallLayer;
     [SerializeField] Transform wallCheck;
 
     CharacterController characterController;
     GameManager gameManager;
-    ControlsSerializable controls;
+    GameSettings settings;
     void Start() {
         characterController = GetComponent<CharacterController>();
         gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
-        controls = gameManager.controls;
+        settings = gameManager.settings;
     }
 
     void Update() {
@@ -62,7 +62,7 @@ public class PlayerController : MonoBehaviour
             Vector3 forward = transform.TransformDirection(Vector3.forward);
             Vector3 right = transform.TransformDirection(Vector3.right);
 
-            bool isRunning = Input.GetKey(controls.sprint);
+            bool isRunning = Input.GetKey(settings.sprint);
             float curSpeedX = canMove ? (isRunning ? runSpeed : walkSpeed) * vertical : 0;
             float curSpeedY = canMove ? (isRunning ? runSpeed : walkSpeed) * horizontal : 0;
             float movementDirectionY = moveDirection.y;
@@ -72,7 +72,7 @@ public class PlayerController : MonoBehaviour
 
             #region Handles Jumping
             if (!isWallJumping) {
-                if (Input.GetKey(controls.jump) && canMove && characterController.isGrounded) {
+                if (Input.GetKey(settings.jump) && canMove && characterController.isGrounded) {
                     moveDirection.y = jumpPower;
                 }
                 else {
@@ -90,10 +90,10 @@ public class PlayerController : MonoBehaviour
         #region Handles Rotation
 
         if (canMove) {
-            rotationX += -Input.GetAxis("Mouse Y") * lookSpeed;
+            rotationX += -Input.GetAxis("Mouse Y") * lookSpeed * settings.sensitivity;
             rotationX = Mathf.Clamp(rotationX, -lookXLimit, lookXLimit);
             playerCamera.transform.localRotation = Quaternion.Euler(rotationX, 0, 0);
-            transform.rotation *= Quaternion.Euler(0, Input.GetAxis("Mouse X") * lookSpeed, 0);
+            transform.rotation *= Quaternion.Euler(0, Input.GetAxis("Mouse X") * lookSpeed * settings.sensitivity, 0);
         }
 
         #endregion

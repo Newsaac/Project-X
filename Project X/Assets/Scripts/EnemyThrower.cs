@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using static UnityEngine.GraphicsBuffer;
 
 public class EnemyThrower : Enemy
 {
@@ -21,10 +22,10 @@ public class EnemyThrower : Enemy
     private bool isAttacking;
     private Vector3 throwPoint;
     [Header("Throw Attack")]
+    [SerializeField] Transform throwableSpawnPoint;
     [SerializeField] GameObject throwablePrefab;
     [SerializeField] float throwPreparation = 0.3f;
-    [SerializeField] float throwAngle = 60f;
-    [SerializeField] float throwForce = 30f;
+    [SerializeField] float initialVelocity = 30f;
 
     private new void Awake() {
         base.Awake();
@@ -50,6 +51,10 @@ public class EnemyThrower : Enemy
     }
 
     protected override void Attack() {
+        Vector3 lookDirection = playerTf.position;
+        lookDirection = new Vector3(lookDirection.x, transform.position.y, lookDirection.z);
+        transform.LookAt(lookDirection);
+
         if (!isAttacking) {
             isAttacking = true;
             throwPoint = playerTf.position;
@@ -58,16 +63,43 @@ public class EnemyThrower : Enemy
     }
     private void Throw() {
 
-        throwable = Instantiate(throwablePrefab, transform);
-        Vector3 distance = throwPoint - transform.position;
-        float y = distance.magnitude * Mathf.Tan(throwAngle);
-        Vector3 forceVector = new(distance.x, transform.position.y + y, distance.z);
-        throwable.GetComponent<Rigidbody>().AddForce(forceVector.normalized * throwForce, ForceMode.Impulse);
+        throwable = Instantiate(throwablePrefab, throwableSpawnPoint);
+        throwable.transform.SetParent(null);
+        Rigidbody rb = throwable.GetComponent<Rigidbody>();
+
+        Vector3 toTarget = throwPoint - throwableSpawnPoint.position;
+
+        float gSquared = Physics.gravity.sqrMagnitude;
+        float b = initialVelocity * initialVelocity + Vector3.Dot(toTarget, Physics.gravity);
+        float discriminant = b * b - gSquared * toTarget.sqrMagnitude;
+
+        // Check whether the target is reachable at max speed or less.
+        if (discriminant < 0) {
+            
+        }
+
+        float discRoot = Mathf.Sqrt(discriminant);
+
+        // Highest shot with the given max speed:
+        float T_max = Mathf.Sqrt((b + discRoot) * 2f / gSquared);
+
+        // Most direct shot with the given max speed:
+        float T_min = Mathf.Sqrt((b - discRoot) * 2f / gSquared);
+
+        // Lowest-speed arc available:
+        float T_lowEnergy = Mathf.Sqrt(Mathf.Sqrt(toTarget.sqrMagnitude * 4f / gSquared));
+
+        float T = T_lowEnergy;
+
+        Vector3 velocity = toTarget / T - Physics.gravity * T / 2f;
+
+        rb.AddForce(velocity, ForceMode.VelocityChange);
 
         StartCoroutine(nameof(AttackCooldown));
     }
+
     private IEnumerator AttackCooldown() {
-        yield return stats.attackCooldown;
+        yield return new WaitForSeconds(stats.attackCooldown);
         isAttacking = false;
     }
 
@@ -107,7 +139,7 @@ public class EnemyThrower : Enemy
 
         Vector3 lookDirection = playerTf.position;
         //uncomment to disable vertical player tracking
-        //lookDirection = new Vector3(lookDirection.x, transform.position.y, lookDirection.z);
+        lookDirection = new Vector3(lookDirection.x, transform.position.y, lookDirection.z);
 
         rb.AddForce(moveDirection.normalized * stats.speed);
         transform.LookAt(lookDirection);

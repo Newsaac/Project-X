@@ -17,11 +17,11 @@ public class PlayerShooting : MonoBehaviour
     private bool isReloading = false;
 
     private GameManager gameManager;
-    private ControlsSerializable controls;
+    private GameSettings controls;
 
     private void Awake() {
         gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
-        controls = gameManager.controls;
+        controls = gameManager.settings;
 
         laserLine = GetComponent<LineRenderer>();
         gunAudio = GetComponent<AudioSource>();
@@ -72,6 +72,7 @@ public class PlayerShooting : MonoBehaviour
 
 
     private IEnumerator ShotEffect() {
+        gunAudio.volume = gameManager.settings.effectsVolume;
         gunAudio.Play();
         laserLine.enabled = true;
 
