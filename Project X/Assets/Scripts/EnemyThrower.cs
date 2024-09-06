@@ -75,6 +75,7 @@ public class EnemyThrower : Enemy
 
         throwable = Instantiate(throwablePrefab, throwableSpawnPoint);
         throwable.transform.SetParent(null);
+        throwable.transform.rotation = Quaternion.EulerAngles(0, 0, 0);
         Rigidbody rb = throwable.GetComponent<Rigidbody>();
 
         Vector3 toTarget = throwPoint - throwableSpawnPoint.position;
