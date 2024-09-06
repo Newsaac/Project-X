@@ -25,12 +25,17 @@ public abstract class Enemy : MonoBehaviour
     protected abstract void Idle();
     protected abstract void TrackPlayer();
 
+    protected virtual void OnDeath() {
+        gameManager.EnemyKilled();
+        Destroy(this.gameObject);
+    }
     public virtual void TakeDamage(int value) {
         hp -= value;
         healthBar.UpdateValue(hp, stats.maxHp);
         if (hp <= 0) {
-            gameManager.EnemyKilled();
-            Destroy(this.gameObject);
+            OnDeath();
         }
     }
+
+    public void Die() { Destroy(this.gameObject); }
 }

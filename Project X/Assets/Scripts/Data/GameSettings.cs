@@ -10,4 +10,5 @@ public class GameSettings
     public KeyCode reload = KeyCode.R;
     public float sensitivity = 1.0f;
     public float effectsVolume = 0.2f;
+    public float deleteCorpsesIn = 15f;
 }

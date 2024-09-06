@@ -6,6 +6,8 @@ public class EnemyWalker : Enemy
 {
     private Rigidbody rb;
     private Transform playerTf;
+    [SerializeField] Animator anim;
+    [SerializeField] Animator animLod;
 
     private bool isRotating = false;
     private float rotationProgress = -1;
@@ -27,15 +29,24 @@ public class EnemyWalker : Enemy
     }
 
     void Update() {
-        if(!gameManager.gameOver) {
+        if(!gameManager.gameOver && hp > 0) {
             float distance = (playerTf.position - transform.position).magnitude;
 
-            if (distance > stats.detectRange)
+            if (distance > stats.detectRange) {
+                anim.SetBool("isIdle", true);
+                animLod.SetBool("isIdle", true);
                 Idle();
-            else if (distance <= stats.detectRange && distance > stats.attackRange)
+            }
+            else if (distance <= stats.detectRange && distance > stats.attackRange) {
+                anim.SetBool("isIdle", false);
+                animLod.SetBool("isIdle", false);
                 TrackPlayer();
-            else
+            }
+            else {
+                anim.SetBool("isIdle", false);
+                animLod.SetBool("isIdle", false);
                 Attack();
+            }
         }
     }
 
@@ -76,9 +87,8 @@ public class EnemyWalker : Enemy
         Vector3 moveDirection = playerTf.position - transform.position;
         moveDirection.y = 0;
 
-        Vector3 lookDirection = playerTf.position;
-        //uncomment to disable vertical player tracking
-        //lookDirection = new Vector3(lookDirection.x, transform.position.y, lookDirection.z);
+        Vector3 lookDirection = playerTf.position;  
+        lookDirection = new Vector3(lookDirection.x, transform.position.y, lookDirection.z);
 
         rb.AddForce(moveDirection.normalized * stats.speed);
         transform.LookAt(lookDirection);
@@ -86,12 +96,14 @@ public class EnemyWalker : Enemy
 
     private void OnCollisionEnter(Collision collision) {
         if (collision.gameObject.CompareTag("Player")) {
+            anim.SetBool("isAttacking", true);
             InvokeRepeating(nameof(PerformAttack), 0, stats.collideDmgCooldown);
         }
     }
 
     private void OnCollisionExit(Collision collision) {
         if (collision.gameObject.CompareTag("Player")) {
+            anim.SetBool("isAttacking", false);
             CancelInvoke(nameof(PerformAttack));
         }
     }
@@ -100,4 +112,13 @@ public class EnemyWalker : Enemy
         gameManager.DamagePlayer(stats.collideDamage);
     }
 
+    protected override void OnDeath() {
+        healthBar.gameObject.SetActive(false);
+        Destroy(gameObject.GetComponent<Rigidbody>());
+        gameObject.GetComponent<CapsuleCollider>().enabled = false;
+        anim.SetTrigger("death");
+        animLod.SetTrigger("death");
+        gameManager.EnemyKilled();
+        Invoke(nameof(Die), gameManager.settings.deleteCorpsesIn);
+    }
 }
