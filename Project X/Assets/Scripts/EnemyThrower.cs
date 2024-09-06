@@ -8,6 +8,7 @@ public class EnemyThrower : Enemy
 
     private Rigidbody rb;
     private Transform playerTf;
+    [SerializeField] Animator anim;
 
     private bool isRotating = false;
     private float rotationProgress = -1;
@@ -25,7 +26,7 @@ public class EnemyThrower : Enemy
     [SerializeField] Transform throwableSpawnPoint;
     [SerializeField] GameObject throwablePrefab;
     [SerializeField] float throwPreparation = 0.3f;
-    [SerializeField] float initialVelocity = 30f;
+    [SerializeField] float maxVelocity = 30f;
 
     private new void Awake() {
         base.Awake();
@@ -41,12 +42,21 @@ public class EnemyThrower : Enemy
         if (!gameManager.gameOver) {
             float distance = (playerTf.position - transform.position).magnitude;
 
-            if (distance > stats.detectRange)
+            if (distance > stats.detectRange) {
+                anim.SetBool("isIdle", true);
+                anim.SetBool("isThrowing", false);
                 Idle();
-            else if (distance <= stats.detectRange && distance > stats.attackRange)
+            }
+            else if (distance <= stats.detectRange && distance > stats.attackRange) {
+                anim.SetBool("isIdle", false);
+                anim.SetBool("isThrowing", false);
                 TrackPlayer();
-            else
-                Attack();
+            }
+            else {
+                anim.SetBool("isThrowing", true);
+                if(hp > 0) 
+                    Attack();
+            }
         }
     }
 
@@ -70,7 +80,7 @@ public class EnemyThrower : Enemy
         Vector3 toTarget = throwPoint - throwableSpawnPoint.position;
 
         float gSquared = Physics.gravity.sqrMagnitude;
-        float b = initialVelocity * initialVelocity + Vector3.Dot(toTarget, Physics.gravity);
+        float b = maxVelocity * maxVelocity + Vector3.Dot(toTarget, Physics.gravity);
         float discriminant = b * b - gSquared * toTarget.sqrMagnitude;
 
         // Check whether the target is reachable at max speed or less.
@@ -118,7 +128,8 @@ public class EnemyThrower : Enemy
             }
             else {
                 initialRotation = transform.rotation;
-                targetRotation = Quaternion.Euler(transform.rotation.eulerAngles.x, UnityEngine.Random.Range(0f, 360f), transform.rotation.eulerAngles.z);
+                targetRotation = Quaternion.Euler(transform.rotation.eulerAngles.x, UnityEngine.Random.Range(-180f, 180f), transform.rotation.eulerAngles.z);
+                anim.SetFloat("turnValue", targetRotation.eulerAngles.y - initialRotation.eulerAngles.y);
                 isRotating = true;
                 rotationProgress = 0;
             }
@@ -126,6 +137,10 @@ public class EnemyThrower : Enemy
     }
 
     private IEnumerator IdleRotateCooldown() {
+        if (!isRotateOnCooldown) {
+            anim.SetFloat("turnValue", 0);
+            anim.SetTrigger("stopTurning");
+        }
         isRotateOnCooldown = true;
 
         yield return new WaitForSeconds(idleRotatePause);
@@ -147,19 +162,30 @@ public class EnemyThrower : Enemy
         transform.LookAt(lookDirection);
     }
 
+    protected override void OnDeath() {
+        healthBar.gameObject.SetActive(false);
+        Destroy(gameObject.GetComponent<Rigidbody>());
+        gameObject.GetComponent<CapsuleCollider>().enabled = false;
+        anim.SetTrigger("death");
+        gameManager.EnemyKilled();
+        Invoke(nameof(Die), gameManager.settings.deleteCorpsesIn);
+    }
+
     private void OnCollisionEnter(Collision collision) {
         if (collision.gameObject.CompareTag("Player")) {
-            InvokeRepeating(nameof(PerformAttack), 0, stats.collideDmgCooldown);
+            anim.SetBool("isPunching", true);
+            InvokeRepeating(nameof(PerformCollide), 0, stats.collideDmgCooldown);
         }
     }
 
     private void OnCollisionExit(Collision collision) {
         if (collision.gameObject.CompareTag("Player")) {
-            CancelInvoke(nameof(PerformAttack));
+            anim.SetBool("isPunching", false);
+            CancelInvoke(nameof(PerformCollide));
         }
     }
 
-    private void PerformAttack() {
+    private void PerformCollide() {
         gameManager.DamagePlayer(stats.collideDamage);
     }
 }
