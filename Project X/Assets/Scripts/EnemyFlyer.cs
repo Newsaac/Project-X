@@ -7,6 +7,7 @@ public class EnemyFlyer : Enemy
     private Rigidbody rb;
     private Transform playerTf;
     private AudioSource audioSource;
+    [SerializeField] Animator anim;
 
 
     private float initialAltitude;
@@ -38,25 +39,26 @@ public class EnemyFlyer : Enemy
     }
 
     void Update() {
-        if (!gameManager.gameOver) {
+        if (!gameManager.gameOver && hp > 0) {
             float distance = (playerTf.position - transform.position).magnitude;
 
             if (distance > stats.detectRange)
                 Idle();
             else if (distance <= stats.detectRange && distance > stats.attackRange)
                 TrackPlayer();
-            else
-                Attack();
+            else {
+                isIdle = false;
+                if(!explosionOnCooldown)
+                    Attack();
+            }
         }
     }
 
     #region Attack
     protected override void Attack() {
-        isIdle = false;
-        if (!explosionOnCooldown) {
-            explosionOnCooldown = true;
-            Invoke(nameof(CreateExplosion), explosionDelay);
-        }
+        anim.SetTrigger("Attack");
+        explosionOnCooldown = true;
+        Invoke(nameof(CreateExplosion), explosionDelay);
     }
 
     private void CreateExplosion() {
@@ -81,6 +83,7 @@ public class EnemyFlyer : Enemy
         Vector3 moveDirection = playerTf.position - transform.position;
 
         Vector3 lookDirection = playerTf.position;
+        lookDirection = new Vector3(lookDirection.x, transform.position.y, lookDirection.z);
 
         rb.AddForce(moveDirection.normalized * stats.speed);
         transform.LookAt(lookDirection);
@@ -135,6 +138,19 @@ public class EnemyFlyer : Enemy
         gameManager.DamagePlayer(stats.collideDamage);
     }
     #endregion
+
+    protected override void OnDeath() {
+        rb.velocity = Vector3.zero;
+        healthBar.gameObject.SetActive(false);
+//        if(!explosionOnCooldown)
+        Invoke(nameof(Die), explosionDelay + explosionDuration + 0.05f);
+        Attack();
+    }
+
+    public override void Die() {
+        gameManager.EnemyKilled();
+        base.Die();
+    }
 
     private void OnDrawGizmosSelected() {
         Gizmos.color = Color.magenta;

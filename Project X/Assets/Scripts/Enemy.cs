@@ -4,6 +4,8 @@ using UnityEngine;
 
 public abstract class Enemy : MonoBehaviour
 {
+    private bool isDead = false;
+
     [SerializeField] protected EnemyStats stats;
 
     protected int hp;
@@ -33,9 +35,12 @@ public abstract class Enemy : MonoBehaviour
         hp -= value;
         healthBar.UpdateValue(hp, stats.maxHp);
         if (hp <= 0) {
-            OnDeath();
+            if (!isDead) {
+                isDead = true;
+                OnDeath();
+            }
         }
     }
 
-    public void Die() { Destroy(this.gameObject); }
+    public virtual void Die() { Destroy(this.gameObject); }
 }
