@@ -5,6 +5,7 @@ using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using TMPro;
 using System;
+using Unity.VisualScripting;
 
 public class GameManager : MonoBehaviour
 {
@@ -34,12 +35,22 @@ public class GameManager : MonoBehaviour
     [SerializeField] Slider hpSlider;
     [SerializeField] Image crosshair;
     [SerializeField] GameObject menuPanel;
+    [SerializeField] Image damageTrim;
+    [Space(5)]
+    [SerializeField] float trimDuration = 0.5f;
+    [SerializeField] float trimFadeInSpeed = 1f;
+    [SerializeField] float trimFadeOutSpeed = 1f;
     //[SerializeField] TextMeshProUGUI controlGuideText;
 
     [Space(20)]
     public GameSettings settings;
 
     private LevelSpecs levelSpecs;
+
+    private float startOpacity = 0f;
+    private float fadeInProgress = -1;
+    private float fadeOutProgress = -1;
+    private bool isTrimOn = false;
 
     private void LoadLevelSpecs() {
         levelSpecs = new LevelSpecs(
@@ -58,7 +69,7 @@ public class GameManager : MonoBehaviour
     }
 
     void Update() {
-        if(!gameOver)
+        if (!gameOver)
             timer += Time.deltaTime;
         ammoText.text = "Ammo: " + ammoCnt;
         timerText.text = "Time: " + timer.ToString("0.00");
@@ -66,7 +77,7 @@ public class GameManager : MonoBehaviour
 
     public void StartGame() {
         Time.timeScale = 1;
-        
+
         timer = 0f;
         bestTimeText.text = "Best: " + (levelSpecs.bestTime == 0f ? "-" : levelSpecs.bestTime.ToString("0.00"));
 
@@ -84,7 +95,7 @@ public class GameManager : MonoBehaviour
     }
 
     public void GameOver() {
-        if((timer < levelSpecs.bestTime || levelSpecs.bestTime == 0) && enemiesLeft == 0)
+        if ((timer < levelSpecs.bestTime || levelSpecs.bestTime == 0) && enemiesLeft == 0)
             PlayerPrefs.SetFloat("Best", timer);
         gameOver = true;
         crosshair.gameObject.SetActive(false);
@@ -109,9 +120,66 @@ public class GameManager : MonoBehaviour
     }
 
     public void DamagePlayer(int amount) {
+        #region Trim Coroutine
+        if (fadeInProgress == -1f) {
+            fadeInProgress = 0f;
+            isTrimOn = false;
+            startOpacity = 0f;
+            StartCoroutine(nameof(CreateTrim));
+        }
+        else if(fadeInProgress < 1 && fadeInProgress >= 0) {
+            //Do nothing
+        }
+        else if(isTrimOn) {
+            StopCoroutine(nameof(CreateTrim));
+            fadeInProgress = 1f;
+            StartCoroutine(nameof(CreateTrim));
+        }
+        else {
+            StopCoroutine(nameof(CreateTrim));
+            fadeInProgress = 0f;
+            isTrimOn = false;
+            startOpacity = damageTrim.color.a;
+            StartCoroutine(nameof(CreateTrim));
+        }
+        #endregion
+
         playerHp -= amount;
         hpSlider.value = ((float)playerHp) / maxPlayerHp;
         if (playerHp <= 0)
             GameOver();
     }
+
+    private IEnumerator CreateTrim() {
+        fadeOutProgress = -1f;
+        while (true) {
+            if (fadeInProgress < 1 && fadeInProgress >= 0) {
+                fadeInProgress += Time.deltaTime * trimFadeInSpeed;
+                Color tmp = damageTrim.color;
+                tmp.a = Mathf.Lerp(startOpacity, 1f, fadeInProgress);
+                damageTrim.color = tmp;
+                yield return new WaitForEndOfFrame();
+            }
+            else if (fadeInProgress >= 1) {
+                isTrimOn = true;
+                yield return new WaitForSeconds(trimDuration);
+                isTrimOn = false;
+                fadeOutProgress = 0f;
+                fadeInProgress = -2f; //any negative that is not -1
+            }
+            else if (fadeOutProgress < 1f && fadeOutProgress >= 0f) {
+                fadeOutProgress += Time.deltaTime * trimFadeOutSpeed;
+                Color tmp = damageTrim.color;
+                tmp.a = Mathf.Lerp(1f, 0f, fadeOutProgress);
+                damageTrim.color = tmp;
+                yield return new WaitForEndOfFrame();
+            }
+            else {
+                fadeInProgress = -1f;
+                fadeOutProgress = -1f;
+                yield break;
+            }
+        }
+    }
+
 }
