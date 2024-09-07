@@ -69,8 +69,6 @@ public class PlayerController : MonoBehaviour
         if (gameManager.gameOver)
             return;
 
-
-
         horizontal = Input.GetAxis("Horizontal");
         vertical = Input.GetAxis("Vertical");
 
@@ -148,7 +146,9 @@ public class PlayerController : MonoBehaviour
     }
 
     private bool IsWalled() {
-        Collider[] colliders = Physics.OverlapSphere(wallCheck.position, characterController.radius + characterController.skinWidth, wallLayer);
+        Vector3 point0 = wallCheck.position; point0.y += characterController.height / 2 - characterController.radius;
+        Vector3 point1 = wallCheck.position; point1.y -= characterController.height / 2 + characterController.radius;
+        Collider[] colliders = Physics.OverlapCapsule(point0, point1, characterController.radius + characterController.skinWidth, wallLayer);
         int wallCnt = 0;
         wallNormalSum = Vector3.zero;
 

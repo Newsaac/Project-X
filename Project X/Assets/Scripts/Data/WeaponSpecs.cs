@@ -11,6 +11,6 @@ public class WeaponSpecs
     public float weaponRange = 50f;                                        
     public float hitForce = 100f;
     public int magazine = 30;
-    public float reloadSpeed = 0.5f;
+    public float reloadDuration = 0.5f;
     public bool isAutomatic = true;
 }

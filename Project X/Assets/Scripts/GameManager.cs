@@ -42,6 +42,9 @@ public class GameManager : MonoBehaviour
     [SerializeField] float trimFadeOutSpeed = 1f;
     //[SerializeField] TextMeshProUGUI controlGuideText;
 
+    [Header("Audio")]
+    [SerializeField] AudioSource bgMusicAudio;
+
     [Space(20)]
     public GameSettings settings;
 
@@ -76,6 +79,9 @@ public class GameManager : MonoBehaviour
     }
 
     public void StartGame() {
+        bgMusicAudio.volume = settings.musicVolume;
+        bgMusicAudio.Play();
+
         Time.timeScale = 1;
 
         timer = 0f;
@@ -95,6 +101,8 @@ public class GameManager : MonoBehaviour
     }
 
     public void GameOver() {
+        bgMusicAudio.Stop();
+
         if ((timer < levelSpecs.bestTime || levelSpecs.bestTime == 0) && enemiesLeft == 0)
             PlayerPrefs.SetFloat("Best", timer);
         gameOver = true;
